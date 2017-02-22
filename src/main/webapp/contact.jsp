@@ -4,7 +4,8 @@
         <h1 class="color_orange">
             Contact Us
         </h1>
-        <img class="img-responsive" src="images/contact.png">
+        <img class="img-responsive pull-right" src="images/contact.png">
+        <br>
         <p>
             <b>Email:</b> You can contact us at the following email address - <a href="mailto:teammates@comp.nus.edu.sg">teammates@comp.nus.edu.sg</a>
         </p>

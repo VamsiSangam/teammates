@@ -4,7 +4,8 @@
         <h1 class="color_orange">
             Terms of Use
         </h1>
-        <img class="img-responsive" src="images/terms.png">
+        <img class="img-responsive pull-right" src="images/terms.png">
+        <br>
         <p>
             By using <b>TEAMMATES</b>, you agree to the following terms of use:
         </p>
