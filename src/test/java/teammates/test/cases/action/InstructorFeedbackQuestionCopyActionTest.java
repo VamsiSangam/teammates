@@ -12,13 +12,16 @@ import teammates.test.driver.AssertHelper;
 import teammates.ui.controller.InstructorFeedbackQuestionCopyAction;
 import teammates.ui.controller.RedirectResult;
 
+/**
+ * SUT: {@link InstructorFeedbackQuestionCopyAction}.
+ */
 public class InstructorFeedbackQuestionCopyActionTest extends BaseActionTest {
 
     @Override
     protected String getActionUri() {
         return Const.ActionURIs.INSTRUCTOR_FEEDBACK_QUESTION_COPY;
     }
-    
+
     @Override
     protected void prepareTestData() {
         // test data is refreshed before each test case
@@ -128,7 +131,8 @@ public class InstructorFeedbackQuestionCopyActionTest extends BaseActionTest {
                                                    .inst()
                                                    .getFeedbackQuestion(session1.getFeedbackSessionName(),
                                                                         session1.getCourseId(), 3);
-        gaeSimulation.loginAsAdmin("admin.user");
+        String adminUserId = "admin.user";
+        gaeSimulation.loginAsAdmin(adminUserId);
 
         params = new String[]{
                 Const.ParamsNames.FEEDBACK_SESSION_NAME, "Second feedback session",
@@ -156,7 +160,7 @@ public class InstructorFeedbackQuestionCopyActionTest extends BaseActionTest {
                              + "created.<br><span class=\"bold\">"
                              + "Essay question:</span> My comments on the class|||"
                              + "/page/instructorFeedbackQuestionCopy";
-        AssertHelper.assertLogMessageEquals(expectedLogMessage, a.getLogMessage());
+        AssertHelper.assertLogMessageEqualsInMasqueradeMode(expectedLogMessage, a.getLogMessage(), adminUserId);
     }
 
     @Override

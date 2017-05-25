@@ -21,16 +21,30 @@ public class Url {
         } catch (MalformedURLException e) {
             Assumption.fail("MalformedURLException for [" + urlString + "]: " + e.getMessage());
         }
-        
+
         this.baseUrl = url.getProtocol() + "://" + url.getAuthority();
         this.relativeUrl = StringHelper.convertToEmptyStringIfNull(url.getPath());
         String query = url.getQuery();
         this.query = query == null ? "" : "?" + query;
     }
-    
+
     /**
-     * @return The value of the {@code parameterName} parameter. Null if no
-     * such parameter.
+     * Returns The first part of the URL, including the protocol and
+     * authority (host name + port number if specified) but not the path.<br>
+     * Example:
+     * <ul>
+     * <li><code>new Url("http://localhost:8888/index.jsp").getBaseUrl()</code>
+     * returns <code>http://localhost:8888</code></li>
+     * <li><code>new Url("https://teammatesv4.appspot.com/index.jsp").getBaseUrl()</code>
+     * returns <code>https://teammatesv4.appspot.com</code></li>
+     * </ul>
+     */
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
+    /**
+     * Returns The value of the {@code parameterName} parameter. Null if no such parameter.
      */
     public String get(String parameterName) {
         /*
@@ -77,15 +91,6 @@ public class Url {
     public static String trimTrailingSlash(String url) {
         return url.trim().replaceAll("/(?=$)", "");
     }
-    
-    /**
-     * Gets the relative path of a full URL. Useful for http/https-based URLs.
-     * @throws MalformedURLException if the given {@code url} is malformed
-     */
-    public static String getRelativePath(String url) throws MalformedURLException {
-        new URL(url); // ensure that the given URL is not malformed
-        return new Url(url).toString();
-    }
 
     @Override
     public String toString() {
@@ -99,5 +104,5 @@ public class Url {
     public String toAbsoluteString() {
         return baseUrl + toString();
     }
-    
+
 }

@@ -15,13 +15,16 @@ import teammates.test.driver.AssertHelper;
 import teammates.ui.controller.InstructorFeedbackQuestionAddAction;
 import teammates.ui.controller.RedirectResult;
 
+/**
+ * SUT: {@link InstructorFeedbackQuestionAddAction}.
+ */
 public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
 
     @Override
     protected String getActionUri() {
         return Const.ActionURIs.INSTRUCTOR_FEEDBACK_QUESTION_ADD;
     }
-    
+
     @AfterClass
     public void classTearDown() {
         // delete entire session to clean the database
@@ -38,7 +41,7 @@ public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
         ______TS("Typical case");
 
         FeedbackSessionAttributes fs = dataBundle.feedbackSessions.get("session1InCourse1");
-        
+
         String[] params = new String[]{
                 Const.ParamsNames.COURSE_ID, fs.getCourseId(),
                 Const.ParamsNames.FEEDBACK_SESSION_NAME, fs.getFeedbackSessionName(),
@@ -126,7 +129,7 @@ public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
                              + " created.<br><span class=\"bold\">Multiple-choice (multiple answers) question:</span> "
                              + "Who do you like in the class?|||/page/instructorFeedbackQuestionAdd";
         AssertHelper.assertLogMessageEquals(expectedLogMessage, action.getLogMessage());
-        
+
         ______TS("Enable other option");
 
         params = new String[]{
@@ -182,7 +185,7 @@ public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
         ______TS("Typical case");
 
         FeedbackSessionAttributes fs = dataBundle.feedbackSessions.get("session1InCourse1");
-        
+
         String[] params = new String[]{
                 Const.ParamsNames.COURSE_ID, fs.getCourseId(),
                 Const.ParamsNames.FEEDBACK_SESSION_NAME, fs.getFeedbackSessionName(),
@@ -270,7 +273,7 @@ public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
                              + " created.<br><span class=\"bold\">Multiple-choice (single answer) question:</span> "
                              + "Who do you like best in the class?|||/page/instructorFeedbackQuestionAdd";
         AssertHelper.assertLogMessageEquals(expectedLogMessage, action.getLogMessage());
-        
+
         ______TS("Enable other option");
 
         params = new String[]{
@@ -327,7 +330,7 @@ public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
         ______TS("Typical case");
 
         FeedbackSessionAttributes fs = dataBundle.feedbackSessions.get("session1InCourse1");
-        
+
         String[] params = new String[]{
                 Const.ParamsNames.COURSE_ID, fs.getCourseId(),
                 Const.ParamsNames.FEEDBACK_SESSION_NAME, fs.getFeedbackSessionName(),
@@ -378,7 +381,7 @@ public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
         ______TS("Typical case");
 
         FeedbackSessionAttributes fs = dataBundle.feedbackSessions.get("session1InCourse1");
-        
+
         String[] params = new String[]{
                 Const.ParamsNames.COURSE_ID, fs.getCourseId(),
                 Const.ParamsNames.FEEDBACK_SESSION_NAME, fs.getFeedbackSessionName(),
@@ -491,7 +494,7 @@ public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
         ______TS("Typical case");
 
         FeedbackSessionAttributes fs = dataBundle.feedbackSessions.get("session1InCourse1");
-        
+
         String[] params = new String[]{
                 Const.ParamsNames.COURSE_ID, fs.getCourseId(),
                 Const.ParamsNames.FEEDBACK_SESSION_NAME, fs.getFeedbackSessionName(),
@@ -825,7 +828,7 @@ public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
         // Purposely not using modifyParamVale because we're removing showRecipientTo
         params[22] = Const.ParamsNames.FEEDBACK_QUESTION_EDITTYPE;
         params[23] = "edit";
-        
+
         params = Arrays.copyOf(params, 24);
 
         action = getAction(params);
@@ -871,7 +874,8 @@ public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
 
         ______TS("Masquerade mode");
 
-        gaeSimulation.loginAsAdmin("admin.user");
+        String adminUserId = "admin.user";
+        gaeSimulation.loginAsAdmin(adminUserId);
 
         params = createParamsForTypicalFeedbackQuestion(instructor1ofCourse1.courseId, fs.getFeedbackSessionName());
         params = addUserIdToParams(instructor1ofCourse1.googleId, params);
@@ -894,7 +898,7 @@ public class InstructorFeedbackQuestionAddActionTest extends BaseActionTest {
                              + "<span class=\"bold\">[idOfTypicalCourse1]</span>"
                              + " created.<br><span class=\"bold\">Essay question:</span> "
                              + "question|||/page/instructorFeedbackQuestionAdd";
-        AssertHelper.assertLogMessageEquals(expectedLogMessage, action.getLogMessage());
+        AssertHelper.assertLogMessageEqualsInMasqueradeMode(expectedLogMessage, action.getLogMessage(), adminUserId);
     }
 
     @Override

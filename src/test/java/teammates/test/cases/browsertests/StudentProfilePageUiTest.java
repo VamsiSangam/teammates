@@ -19,16 +19,19 @@ import teammates.test.pageobjects.StudentHomePage;
 import teammates.test.pageobjects.StudentProfilePage;
 import teammates.test.pageobjects.StudentProfilePicturePage;
 
+/**
+ * SUT: {@link Const.ActionURIs#STUDENT_PROFILE_PAGE}.
+ */
 @Priority(-3)
 public class StudentProfilePageUiTest extends BaseUiTestCase {
-    private static StudentProfilePage profilePage;
+    private StudentProfilePage profilePage;
 
     @Override
     protected void prepareTestData() {
         testData = loadDataBundle("/StudentProfilePageUiTest.json");
-        
+
         // use the 2nd student account injected for this test
-        
+
         String student2GoogleId = TestProperties.TEST_STUDENT2_ACCOUNT;
         String student2Email = student2GoogleId + "@gmail.com";
         testData.accounts.get("studentWithExistingProfile").googleId = student2GoogleId;
@@ -36,7 +39,7 @@ public class StudentProfilePageUiTest extends BaseUiTestCase {
         testData.accounts.get("studentWithExistingProfile").studentProfile.googleId = student2GoogleId;
         testData.students.get("studentWithExistingProfile").googleId = student2GoogleId;
         testData.students.get("studentWithExistingProfile").email = student2Email;
-        
+
         removeAndRestoreDataBundle(testData);
     }
 
@@ -54,19 +57,19 @@ public class StudentProfilePageUiTest extends BaseUiTestCase {
         ______TS("Test disabling and enabling of upload button");
         // initial disabled state
         profilePage.verifyUploadButtonState(false);
-        
+
         //enabled when a file is selected
         profilePage.fillProfilePic("src/test/resources/images/profile_pic.png");
         profilePage.verifyUploadButtonState(true);
-        
+
         // disabled when file is cancelled
         profilePage.fillProfilePic("");
         profilePage.verifyUploadButtonState(false);
-        
+
         // re-enabled when a new file is selected
         profilePage.fillProfilePic("src/test/resources/images/profile_pic.png");
         profilePage.verifyUploadButtonState(true);
-        
+
     }
 
     private void testNavLinkToPage() {
@@ -89,6 +92,11 @@ public class StudentProfilePageUiTest extends BaseUiTestCase {
         profilePage = getProfilePageForStudent("studentWithExistingProfile");
         profilePage.verifyHtmlPart(By.id("editProfileDiv"), "/studentProfileEditDivExistingValues.html");
 
+        ______TS("Typical case: existing profile with attempted script injection");
+        profilePage = getProfilePageForStudent("student1InTestingSanitizationCourse");
+        profilePage.verifyHtmlPart(
+                By.id("editProfileDiv"), "/studentProfilePageWithAttemptedScriptInjection.html");
+
         ______TS("Typical case: edit profile picture modal (without existing picture)");
         profilePage = getProfilePageForStudent("studentWithExistingProfile");
         profilePage.showPictureEditor();
@@ -102,7 +110,7 @@ public class StudentProfilePageUiTest extends BaseUiTestCase {
         profilePage.verifyStatus(Const.StatusMessages.STUDENT_PROFILE_PICTURE_SAVED);
         profilePage.waitForUploadEditModalVisible();
         profilePage.verifyHtmlMainContent("/studentProfilePageFilled.html");
-        
+
         profilePage.closeEditPictureModal();
     }
 
@@ -119,6 +127,19 @@ public class StudentProfilePageUiTest extends BaseUiTestCase {
                                           "male", "this is enough!$%&*</>");
         profilePage.verifyStatus(Const.StatusMessages.STUDENT_PROFILE_EDITED);
 
+        ______TS("Typical case: attempted script injection");
+
+        StudentProfileAttributes spa =
+                new StudentProfileAttributes("valid.id", "name<script>alert(\"Hello world!\");</script>",
+                        "e@email.tmt", " inst<script>alert(\"Hello world!\");</script>", "American",
+                        "male", "this is enough!$%&*</><script>alert(\"Hello world!\");</script>", "");
+        profilePage.editProfileThroughUi(
+                spa.shortName, spa.email, spa.institute, spa.nationality, spa.gender, spa.moreInfo);
+        profilePage.ensureProfileContains("name<script>alert(\"Hello world!\");</script>",
+                "e@email.tmt", "inst<script>alert(\"Hello world!\");</script>", "American",
+                "male", "this is enough!$%&*</><script>alert(\"Hello world!\");</script>");
+        profilePage.verifyStatus(Const.StatusMessages.STUDENT_PROFILE_EDITED);
+
         ______TS("Typical case: changing genders for complete coverage");
 
         profilePage.editProfileThroughUi("short.name", "e@email.tmt", "inst", "American", "other",
@@ -130,12 +151,11 @@ public class StudentProfilePageUiTest extends BaseUiTestCase {
         profilePage.ensureProfileContains("short.name", "e@email.tmt", "inst", "American",
                                          "female", "this is enough!$%&*</>");
 
-        ______TS("Failure case: script injection");
+        ______TS("Failure case: invalid institute with attempted script injection");
 
-        StudentProfileAttributes spa = new StudentProfileAttributes("valid.id",
-                                                                    "<script>alert(\"Hello world!\");</script>",
-                                                                    "e@email.tmt", " inst", "American",
-                                                                    "male", "this is enough!$%&*</>", "");
+        spa = new StudentProfileAttributes("valid.id", "short.name", "e@email.tmt",
+                                            "<script>alert(\"Hello world!\");</script>",
+                                            "American", "male", "this is enough!$%&*</>", "");
         profilePage.editProfileThroughUi(spa.shortName, spa.email, spa.institute, spa.nationality, spa.gender,
                                          spa.moreInfo);
         profilePage.ensureProfileContains("short.name", "e@email.tmt", "inst", "American",
@@ -144,7 +164,7 @@ public class StudentProfilePageUiTest extends BaseUiTestCase {
                                              // de-sanitize
                                              .replace("&lt;", "<").replace("&gt;", ">")
                                              .replace("&quot;", "\"").replace("&#x2f;", "/"));
-        
+
         ______TS("Failure case: invalid data");
 
         spa = new StudentProfileAttributes("valid.id", "$$short.name", "e@email.tmt", " inst  ", "American",
@@ -172,16 +192,16 @@ public class StudentProfilePageUiTest extends BaseUiTestCase {
         verifyPictureIsPresent(prevPictureKey);
 
         ______TS("Typical case: repeated edit");
-        
+
         profilePage.showPictureEditor();
         profilePage.editProfilePhoto();
         profilePage.ensureProfileContains("short.name", "e@email.tmt", "inst", "American",
                                           "female", "this is enough!$%&*</>");
         profilePage.verifyPhotoSize(150, 150);
-        
+
         prevPictureKey = BackDoor.getStudentProfile(studentGoogleId).pictureKey;
         verifyPictureIsPresent(prevPictureKey);
-        
+
         ______TS("Failure case: not a picture");
 
         profilePage.fillProfilePic("src/test/resources/images/not_a_picture.txt");
@@ -202,7 +222,7 @@ public class StudentProfilePageUiTest extends BaseUiTestCase {
 
         profilePage.fillProfilePic("src/test/resources/images/image_tall.jpg");
         profilePage.uploadPicture();
-        
+
         profilePage.verifyStatus(Const.StatusMessages.STUDENT_PROFILE_PICTURE_SAVED);
         profilePage.waitForUploadEditModalVisible();
         profilePage.verifyPhotoSize(3074, 156);

@@ -9,13 +9,16 @@ import teammates.ui.controller.AjaxResult;
 import teammates.ui.controller.StudentProfileCreateFormUrlAction;
 import teammates.ui.pagedata.StudentProfileCreateFormUrlAjaxPageData;
 
+/**
+ * SUT: {@link StudentProfileCreateFormUrlAction}.
+ */
 public class StudentProfileCreateFormUrlActionTest extends BaseActionTest {
 
     @Override
     protected String getActionUri() {
         return Const.ActionURIs.STUDENT_PROFILE_CREATEUPLOADFORMURL;
     }
-    
+
     @Override
     @Test
     public void testExecuteAndPostProcess() {
@@ -63,7 +66,7 @@ public class StudentProfileCreateFormUrlActionTest extends BaseActionTest {
                                   + "|||true|||Student" + (isMasquerade ? "(M)" : "") + "|||" + student.name
                                   + "|||" + student.googleId + "|||" + student.email + "|||Created Url successfully: "
                                   + data.formUrl + "|||/page/studentProfileCreateFormUrl";
-        AssertHelper.assertLogMessageEquals(expectedLogMessage, action.getLogMessage());
+        AssertHelper.assertLogMessageEqualsIgnoreLogId(expectedLogMessage, action.getLogMessage());
     }
 
     @Override

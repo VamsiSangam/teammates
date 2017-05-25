@@ -11,32 +11,32 @@ import teammates.logic.api.EmailGenerator;
  * Task queue worker action: sends registration email for a student of a course.
  */
 public class StudentCourseJoinEmailWorkerAction extends AutomatedAction {
-    
+
     @Override
     protected String getActionDescription() {
         return null;
     }
-    
+
     @Override
     protected String getActionMessage() {
         return null;
     }
-    
+
     @Override
     public void execute() {
         String courseId = getRequestParamValue(ParamsNames.COURSE_ID);
-        Assumption.assertNotNull(courseId);
+        Assumption.assertPostParamNotNull(ParamsNames.COURSE_ID, courseId);
         String studentEmail = getRequestParamValue(ParamsNames.STUDENT_EMAIL);
-        Assumption.assertNotNull(studentEmail);
+        Assumption.assertPostParamNotNull(ParamsNames.STUDENT_EMAIL, studentEmail);
         String isRejoinString = getRequestParamValue(ParamsNames.IS_STUDENT_REJOINING);
-        Assumption.assertNotNull(isRejoinString);
+        Assumption.assertPostParamNotNull(ParamsNames.IS_STUDENT_REJOINING, isRejoinString);
         boolean isRejoin = Boolean.parseBoolean(isRejoinString);
-        
+
         CourseAttributes course = logic.getCourse(courseId);
         Assumption.assertNotNull(course);
         StudentAttributes student = logic.getStudentForEmail(courseId, studentEmail);
         Assumption.assertNotNull(student);
-        
+
         EmailWrapper email = isRejoin
                 ? new EmailGenerator().generateStudentCourseRejoinEmailAfterGoogleIdReset(course, student)
                 : new EmailGenerator().generateStudentCourseJoinEmail(course, student);
@@ -46,5 +46,5 @@ public class StudentCourseJoinEmailWorkerAction extends AutomatedAction {
             throw new RuntimeException("Unexpected error while sending email", e);
         }
     }
-    
+
 }

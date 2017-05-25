@@ -1,12 +1,16 @@
 package teammates.ui.controller;
 
 import teammates.common.util.Const;
+import teammates.common.util.Logger;
+import teammates.common.util.SanitizationHelper;
 import teammates.ui.pagedata.StudentProfilePageData;
 
 /**
- * Action: showing the profile page for a student in a course
+ * Action: showing the profile page for a student in a course.
  */
 public class StudentProfilePageAction extends Action {
+
+    private static final Logger log = Logger.getLogger();
 
     @Override
     protected ActionResult execute() {
@@ -22,7 +26,8 @@ public class StudentProfilePageAction extends Action {
         }
 
         StudentProfilePageData data = new StudentProfilePageData(account, isEditingPhoto);
-        statusToAdmin = "studentProfile Page Load <br> Profile: " + account.studentProfile.toString();
+        statusToAdmin = "studentProfile Page Load <br> Profile: "
+                + SanitizationHelper.sanitizeForHtmlTag(account.studentProfile.toString());
 
         return createShowPageResult(Const.ViewURIs.STUDENT_PROFILE_PAGE, data);
     }

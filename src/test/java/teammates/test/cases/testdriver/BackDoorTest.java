@@ -3,44 +3,50 @@ package teammates.test.cases.testdriver;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.google.appengine.api.datastore.Text;
+
+import teammates.common.datatransfer.DataBundle;
 import teammates.common.datatransfer.attributes.AccountAttributes;
 import teammates.common.datatransfer.attributes.CourseAttributes;
-import teammates.common.datatransfer.DataBundle;
 import teammates.common.datatransfer.attributes.FeedbackQuestionAttributes;
 import teammates.common.datatransfer.attributes.FeedbackResponseAttributes;
 import teammates.common.datatransfer.attributes.InstructorAttributes;
 import teammates.common.datatransfer.attributes.StudentAttributes;
 import teammates.common.util.Const;
 import teammates.common.util.StringHelper;
-import teammates.test.cases.BaseTestCaseWithDatastoreAccess;
+import teammates.test.cases.BaseTestCaseWithBackDoorApiAccess;
 import teammates.test.driver.BackDoor;
 import teammates.test.driver.Priority;
 
-import com.google.appengine.api.datastore.Text;
-
+/**
+ * SUT: {@link BackDoor}.
+ */
 @Priority(2)
-public class BackDoorTest extends BaseTestCaseWithDatastoreAccess {
+public class BackDoorTest extends BaseTestCaseWithBackDoorApiAccess {
 
-    private static DataBundle dataBundle = getTypicalDataBundle();
+    private DataBundle dataBundle;
 
     @BeforeClass
     public void classSetup() {
+        dataBundle = getTypicalDataBundle();
         removeAndRestoreDataBundle(dataBundle);
-        
+
         // verifies that typical bundle is restored by the above operation
-        verifyPresentInDatastore(dataBundle);
+        DataBundle expected = getTypicalDataBundle();
+        expected.sanitizeForSaving();
+        verifyPresentInDatastore(expected);
     }
 
     @Test
     public void testDeletion() {
-        
+
         // ----------deleting Instructor entities-------------------------
         InstructorAttributes instructor1OfCourse1 = dataBundle.instructors.get("instructor2OfCourse2");
         verifyPresentInDatastore(instructor1OfCourse1);
         String status = BackDoor.deleteInstructor(instructor1OfCourse1.courseId, instructor1OfCourse1.email);
         assertEquals(Const.StatusCodes.BACKDOOR_STATUS_SUCCESS, status);
         verifyAbsentInDatastore(instructor1OfCourse1);
-        
+
         //try to delete again: should indicate as success because delete fails silently.
         status = BackDoor.deleteInstructor(instructor1OfCourse1.email, instructor1OfCourse1.courseId);
         assertEquals(Const.StatusCodes.BACKDOOR_STATUS_SUCCESS, status);
@@ -50,12 +56,12 @@ public class BackDoorTest extends BaseTestCaseWithDatastoreAccess {
         FeedbackResponseAttributes fr = dataBundle.feedbackResponses.get("response1ForQ2S1C1");
         fq = BackDoor.getFeedbackQuestion(fq.courseId, fq.feedbackSessionName, fq.questionNumber);
         fr = BackDoor.getFeedbackResponse(fq.getId(), fr.giver, fr.recipient);
-        
+
         verifyPresentInDatastore(fr);
         status = BackDoor.deleteFeedbackResponse(fq.getId(), fr.giver, fr.recipient);
         assertEquals(Const.StatusCodes.BACKDOOR_STATUS_SUCCESS, status);
         verifyAbsentInDatastore(fr);
-        
+
         // ----------deleting Feedback Question entities-------------------------
         fq = dataBundle.feedbackQuestions.get("qn5InSession1InCourse1");
         verifyPresentInDatastore(fq);
@@ -75,14 +81,14 @@ public class BackDoorTest extends BaseTestCaseWithDatastoreAccess {
         StudentAttributes student2InCourse2 = dataBundle.students
                 .get("student2InCourse2");
         verifyAbsentInDatastore(student2InCourse2);
-        
+
         // #COURSE 1
         CourseAttributes course1 = dataBundle.courses.get("typicalCourse1");
         verifyPresentInDatastore(course1);
         status = BackDoor.deleteCourse(course1.getId());
         assertEquals(Const.StatusCodes.BACKDOOR_STATUS_SUCCESS, status);
         verifyAbsentInDatastore(course1);
-        
+
         // check if related student entities are also deleted
         StudentAttributes student1InCourse1 = dataBundle.students
                 .get("student1InCourse1");
@@ -94,39 +100,27 @@ public class BackDoorTest extends BaseTestCaseWithDatastoreAccess {
         status = BackDoor.deleteCourse(courseNoEvals.getId());
         assertEquals(Const.StatusCodes.BACKDOOR_STATUS_SUCCESS, status);
         verifyAbsentInDatastore(courseNoEvals);
-        
+
         // ----------deleting Feedback Session entities-------------------------
         // TODO: do proper deletion test
 
     }
-    
+
     @Test
     public void testCreateAccount() {
         AccountAttributes newAccount = dataBundle.accounts.get("instructor1OfCourse1");
-        
+
         // Make sure not already inside
         BackDoor.deleteAccount(newAccount.googleId);
         verifyAbsentInDatastore(newAccount);
-        
+
         // Perform creation
         BackDoor.createAccount(newAccount);
         verifyPresentInDatastore(newAccount);
-        
+
         // Clean up
         BackDoor.deleteAccount(newAccount.googleId);
         verifyAbsentInDatastore(newAccount);
-    }
-    
-    public void testGetAccount() {
-        // already tested by testPersistenceAndDeletion
-    }
-    
-    public void testDeleteAccount() {
-        // already tested by testPersistenceAndDeletion
-    }
-
-    public void testDeleteInstructors() {
-        // already tested by testPersistenceAndDeletion
     }
 
     @Test
@@ -140,11 +134,11 @@ public class BackDoorTest extends BaseTestCaseWithDatastoreAccess {
         String email = "tmapitt@tci.tmt";
         @SuppressWarnings("deprecation")
         InstructorAttributes instructor = new InstructorAttributes(instructorId, courseId, name, email);
-        
+
         // Make sure not already inside
         BackDoor.deleteInstructor(courseId, email);
         verifyAbsentInDatastore(instructor);
-        
+
         // Perform creation
         BackDoor.createInstructor(instructor);
         verifyPresentInDatastore(instructor);
@@ -155,14 +149,6 @@ public class BackDoorTest extends BaseTestCaseWithDatastoreAccess {
         verifyAbsentInDatastore(instructor);
     }
 
-    public void testGetInstructorAsJson() {
-        // already tested by testPersistenceAndDeletion
-    }
-
-    public void testDeleteInstructor() {
-        // already tested by testPersistenceAndDeletion
-    }
-
     @Test
     public void testCreateCourse() {
         // only minimal testing because this is a wrapper method for
@@ -171,26 +157,18 @@ public class BackDoorTest extends BaseTestCaseWithDatastoreAccess {
         String courseId = "tmapitt.tcc.course";
         CourseAttributes course = new CourseAttributes(courseId,
                 "Name of tmapitt.tcc.instructor", "UTC");
-        
+
         // Make sure not already inside
         BackDoor.deleteCourse(courseId);
         verifyAbsentInDatastore(course);
-        
+
         // Perform creation
         BackDoor.createCourse(course);
         verifyPresentInDatastore(course);
-        
+
         // Clean up
         BackDoor.deleteCourse(courseId);
         verifyAbsentInDatastore(course);
-    }
-
-    public void testGetCourseAsJson() {
-        // already tested by testPersistenceAndDeletion
-    }
-    
-    public void testDeleteCourse() {
-        // already tested by testPersistenceAndDeletion
     }
 
     @Test
@@ -243,10 +221,6 @@ public class BackDoorTest extends BaseTestCaseWithDatastoreAccess {
 
     }
 
-    public void testGetStudentAsJson() {
-        // already tested by testPersistenceAndDeletion
-    }
-
     @Test
     public void testEditStudent() {
 
@@ -255,7 +229,7 @@ public class BackDoorTest extends BaseTestCaseWithDatastoreAccess {
         // try to create the entity in case it does not exist
         BackDoor.createStudent(student);
         verifyPresentInDatastore(student);
-        
+
         String originalEmail = student.email;
         student.name = "New name";
         student.lastName = "name";
@@ -278,10 +252,6 @@ public class BackDoorTest extends BaseTestCaseWithDatastoreAccess {
         verifyAbsentInDatastore(student);
     }
 
-    public void testDeleteStudent() {
-        // already tested by testPersistenceAndDeletion
-    }
-    
     @Test
     public void testCreateFeedbackResponse() {
 

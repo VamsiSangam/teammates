@@ -10,14 +10,17 @@ import com.google.appengine.api.datastore.Text;
 import teammates.common.util.SanitizationHelper;
 import teammates.test.cases.BaseTestCase;
 
+/**
+ * SUT: {@link SanitizationHelper}.
+ */
 public class SanitizationHelperTest extends BaseTestCase {
-    
+
     @Test
     public void testSanitizeGoogleId() {
         assertEquals("big-small.20_12", SanitizationHelper.sanitizeGoogleId(" big-small.20_12 @Gmail.COM \t\n"));
         assertEquals("user@hotmail.com", SanitizationHelper.sanitizeGoogleId(" user@hotmail.com \t\n"));
     }
-    
+
     @Test
     public void testSanitizeEmail() {
         String emailWithWhiteSpaces = "\tnormal@email.com \t\n";
@@ -27,7 +30,7 @@ public class SanitizationHelperTest extends BaseTestCase {
         assertEquals(normalEmail, SanitizationHelper.sanitizeEmail(normalEmail));
         assertEquals(normalEmail, SanitizationHelper.sanitizeEmail(emailWithWhiteSpaces));
     }
-    
+
     @Test
     public void testSanitizeName() {
 
@@ -38,17 +41,17 @@ public class SanitizationHelperTest extends BaseTestCase {
         assertEquals(normalName, SanitizationHelper.sanitizeName(normalName));
         assertEquals(normalName, SanitizationHelper.sanitizeName(nameWithWhiteSpaces));
     }
-    
+
     @Test
     public void testSanitizeTitle() {
         // tested as name
     }
-    
+
     @Test
     public void testSanitizeTextField() {
         // tested as email
     }
-    
+
     @Test
     public void testSanitizeForJs() {
         sanitizeJs_receivesNull_returnsNull();
@@ -74,8 +77,7 @@ public class SanitizationHelperTest extends BaseTestCase {
     }
 
     private void sanitizeHtml_receivesNull_returnsNull() {
-        String nullString = null;
-        assertEquals(null, SanitizationHelper.sanitizeForHtml(nullString));
+        assertEquals(null, SanitizationHelper.sanitizeForHtml((String) null));
     }
 
     private void sanitizeHtml_receivesCodeInjection_returnsSanitized() {
@@ -101,8 +103,7 @@ public class SanitizationHelperTest extends BaseTestCase {
     }
 
     private void desanitizeFromHtml_receivesNull_returnsNull() {
-        String nullString = null;
-        assertEquals(null, SanitizationHelper.desanitizeFromHtml(nullString));
+        assertEquals(null, SanitizationHelper.desanitizeFromHtml((String) null));
     }
 
     private void desanitizeFromHtml_recievesEmpty_returnsEmpty() {
@@ -130,8 +131,7 @@ public class SanitizationHelperTest extends BaseTestCase {
     }
 
     private void sanitizeHtmlTag_receivesNull_returnsNull() {
-        String nullString = null;
-        assertEquals(null, SanitizationHelper.sanitizeForHtmlTag(nullString));
+        assertEquals(null, SanitizationHelper.sanitizeForHtmlTag(null));
     }
 
     @Test
@@ -161,10 +161,33 @@ public class SanitizationHelperTest extends BaseTestCase {
                                   + "<span style=\"color:#339966\">Content</span>";
         String sanitized = SanitizationHelper.sanitizeForRichText(actualRichText);
         assertEquals(expectedRichText, sanitized);
-        
+
         Text actualRichTextObj = new Text(actualRichText);
         Text sanitizedTextObj = SanitizationHelper.sanitizeForRichText(actualRichTextObj);
         assertEquals(expectedRichText, sanitizedTextObj.getValue());
+
+        actualRichText = "<table cellspacing = \"5\" onmouseover=\"alert('onmouseover');\">"
+                + "<thead><tr><td>No.</td><td colspan = \"2\">People</td></tr></thead>"
+                + "<caption> Table with caption</caption>"
+                + "<tbody><tr><td>1</td><td>Amy</td><td><strong>Smith</strong></td></tr>"
+                + "<tr><td>2</td><td>Bob</td><td><strong>Tan</strong></td></tr>"
+                + "</tbody></table>"
+                + "<p>Chemical formula: C<sub>6</sub>H<sub>12</sub>O<sub>6</sub></p>"
+                + "</td></option></div> invalid closing tags"
+                + "f(x) = x<sup>2</sup>"
+                + "<code>System.out.println(\"Hello World\");</code>";
+        expectedRichText = "<table cellspacing=\"5\">"
+                + "<thead><tr><td>No.</td><td colspan=\"2\">People</td></tr></thead>"
+                + "<caption> Table with caption</caption>"
+                + "<tbody><tr><td>1</td><td>Amy</td><td><strong>Smith</strong></td></tr>"
+                + "<tr><td>2</td><td>Bob</td><td><strong>Tan</strong></td></tr>"
+                + "</tbody></table>"
+                + "<p>Chemical formula: C<sub>6</sub>H<sub>12</sub>O<sub>6</sub></p>"
+                + " invalid closing tags"
+                + "f(x) &#61; x<sup>2</sup>"
+                + "<code>System.out.println(&#34;Hello World&#34;);</code>";
+        sanitized = SanitizationHelper.sanitizeForRichText(actualRichText);
+        assertEquals(expectedRichText, sanitized);
     }
 
     @Test
@@ -174,8 +197,7 @@ public class SanitizationHelperTest extends BaseTestCase {
     }
 
     private void sanitizeForNextUrl_receivesNull_returnsNull() {
-        String nullString = null;
-        assertEquals(null, SanitizationHelper.sanitizeForNextUrl(nullString));
+        assertEquals(null, SanitizationHelper.sanitizeForNextUrl(null));
     }
 
     private void sanitizeForNextUrl_receivesUrl_returnsSanitizedUrl() {
@@ -193,8 +215,7 @@ public class SanitizationHelperTest extends BaseTestCase {
     }
 
     private void desanitizeFromNextUrl_receivesNull_returnsNull() {
-        String nullString = null;
-        assertEquals(null, SanitizationHelper.desanitizeFromNextUrl(nullString));
+        assertEquals(null, SanitizationHelper.desanitizeFromNextUrl(null));
     }
 
     private void desanitizeFromNextUrl_receivesSanitized_returnsDesanitized() {
@@ -223,7 +244,7 @@ public class SanitizationHelperTest extends BaseTestCase {
         String sanitized = SanitizationHelper.sanitizeForCsv(unsanitized);
         assertEquals(expected, sanitized);
     }
-    
+
     @Test
     public void testSanitizeListForCsv() {
         sanitizeCsvList_receivesEmptyList_returnsEmptyList();
@@ -246,24 +267,64 @@ public class SanitizationHelperTest extends BaseTestCase {
 
         assertEquals(expected, SanitizationHelper.sanitizeListForCsv(unsanitized));
     }
-    
+
     @Test
     public void testSanitizeStringForXPath() {
         String text = "";
         String expected = "''";
         assertEquals(expected, SanitizationHelper.sanitizeStringForXPath(text));
-        
+
         text = "Will o' The Wisp";
         expected = "concat('Will o',\"'\",' The Wisp','')";
         assertEquals(expected, SanitizationHelper.sanitizeStringForXPath(text));
-        
+
         text = "'''''Will o''''' The''''' Wisp";
         expected = "concat(\"'''''\",'Will o',\"'''''\",' The',\"'''''\",' Wisp','')";
         assertEquals(expected, SanitizationHelper.sanitizeStringForXPath(text));
-        
+
         text = "Team 1</td></div>'\"";
         expected = "concat('Team 1</td></div>',\"'\",'\"','')";
         assertEquals(expected, SanitizationHelper.sanitizeStringForXPath(text));
-        
+
+    }
+
+    @Test
+    public void testIsSanitizedHtml() {
+        assertFalse("should return false if string is null",
+                SanitizationHelper.isSanitizedHtml(null));
+        assertFalse("should return false if empty string",
+                SanitizationHelper.isSanitizedHtml(""));
+
+        assertFalse("should return false for string with no special characters",
+                SanitizationHelper.isSanitizedHtml("This is an normal string."));
+
+        String sanitized = SanitizationHelper.sanitizeForHtml("<script>alert('hi');</script>");
+        assertTrue("should return true if string is sanitized",
+                SanitizationHelper.isSanitizedHtml(sanitized));
+
+        String unsanitized = "<not sanitized>" + sanitized;
+        assertFalse("should return false if string contains unsanitized characters",
+                SanitizationHelper.isSanitizedHtml(unsanitized));
+    }
+
+    @Test
+    public void testDesanitizeIfSanitized() {
+        assertNull("should return null if given null", SanitizationHelper.desanitizeIfHtmlSanitized(null));
+
+        String unsanitized = "This is a normal string...";
+        assertEquals("should return same unsanitized string if given unsanitized with normal characters",
+                unsanitized, SanitizationHelper.desanitizeIfHtmlSanitized(unsanitized));
+
+        unsanitized = "<script>alert('hi');</script>";
+        assertEquals("should return same unsanitized string if given unsanitized with special characters",
+                unsanitized, SanitizationHelper.desanitizeIfHtmlSanitized(unsanitized));
+
+        String sanitized = SanitizationHelper.sanitizeForHtml(unsanitized);
+        assertEquals("should desanitize string if given sanitized",
+                unsanitized, SanitizationHelper.desanitizeIfHtmlSanitized(sanitized));
+
+        unsanitized = "\"not sanitized\"" + sanitized;
+        assertEquals("should return same unsanitized string if given unsanitized string containing sanitized sequences",
+                unsanitized, SanitizationHelper.desanitizeIfHtmlSanitized(unsanitized));
     }
 }

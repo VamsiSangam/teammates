@@ -3,30 +3,30 @@ package teammates.ui.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.appengine.api.datastore.DatastoreTimeoutException;
+import com.google.apphosting.api.DeadlineExceededException;
+
 import teammates.common.datatransfer.UserType;
 import teammates.common.exception.EntityNotFoundException;
 import teammates.common.exception.FeedbackSessionNotVisibleException;
+import teammates.common.exception.InvalidOriginException;
 import teammates.common.exception.NullPostParameterException;
 import teammates.common.exception.PageNotFoundException;
+import teammates.common.exception.TeammatesException;
 import teammates.common.exception.UnauthorizedAccessException;
-import teammates.common.util.ActivityLogEntry;
 import teammates.common.util.Const;
-import teammates.common.util.EmailWrapper;
 import teammates.common.util.HttpRequestHelper;
+import teammates.common.util.LogMessageGenerator;
 import teammates.common.util.Logger;
 import teammates.common.util.StatusMessage;
 import teammates.common.util.StatusMessageColor;
-import teammates.logic.api.EmailGenerator;
-import teammates.logic.api.EmailSender;
 import teammates.logic.api.GateKeeper;
-
-import com.google.appengine.api.datastore.DatastoreTimeoutException;
-import com.google.apphosting.api.DeadlineExceededException;
 
 /**
  * Receives requests from the Browser, executes the matching action and sends
@@ -46,8 +46,10 @@ public class ControllerServlet extends HttpServlet {
     @Override
     @SuppressWarnings("PMD.AvoidCatchingThrowable") // used as fallback
     public final void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        
+
         UserType userType = new GateKeeper().getCurrentUser();
+        String url = HttpRequestHelper.getRequestedUrl(req);
+        Map<String, String[]> params = HttpRequestHelper.getParameterMap(req);
 
         try {
             /* We are using the Template Method Design Pattern here.
@@ -56,11 +58,11 @@ public class ControllerServlet extends HttpServlet {
              * classes, based on request-specific needs.
              */
             long startTime = System.currentTimeMillis();
-            
+
             log.info("Request received : [" + req.getMethod() + "] " + req.getRequestURL().toString()
                     + ":" + HttpRequestHelper.printRequestParameters(req));
             log.info("User agent : " + req.getHeader("User-Agent"));
-            
+
             Action c = new ActionFactory().getAction(req);
             if (c.isValidUser()) {
                 ActionResult actionResult = c.executeAndPostProcess();
@@ -68,29 +70,39 @@ public class ControllerServlet extends HttpServlet {
             } else {
                 resp.sendRedirect(c.getAuthenticationRedirectUrl());
             }
-            
+
             long timeTaken = System.currentTimeMillis() - startTime;
             // This is the log message that is used to generate the 'activity log' for the admin.
-            
+
             log.info(c.getLogMessage() + "|||" + timeTaken);
-            
+
         } catch (PageNotFoundException e) {
-            log.warning(ActivityLogEntry.generateServletActionFailureLogMessage(req, e, userType));
+            log.warning(new LogMessageGenerator()
+                                .generateActionFailureLogMessage(url, params, e, userType));
             cleanUpStatusMessageInSession(req);
             resp.sendRedirect(Const.ViewURIs.ACTION_NOT_FOUND_PAGE);
         } catch (EntityNotFoundException e) {
-            log.warning(ActivityLogEntry.generateServletActionFailureLogMessage(req, e, userType));
+            log.warning(new LogMessageGenerator()
+                                .generateActionFailureLogMessage(url, params, e, userType));
             cleanUpStatusMessageInSession(req);
             resp.sendRedirect(Const.ViewURIs.ENTITY_NOT_FOUND_PAGE);
 
         } catch (FeedbackSessionNotVisibleException e) {
-            log.warning(ActivityLogEntry.generateServletActionFailureLogMessage(req, e, userType));
+            log.warning(new LogMessageGenerator()
+                                .generateActionFailureLogMessage(url, params, e, userType));
             cleanUpStatusMessageInSession(req);
             req.getSession().setAttribute(Const.ParamsNames.FEEDBACK_SESSION_NOT_VISIBLE, e.getStartTimeString());
             resp.sendRedirect(Const.ViewURIs.FEEDBACK_SESSION_NOT_VISIBLE);
-            
+
+        } catch (InvalidOriginException e) {
+            log.warning(new LogMessageGenerator()
+                                .generateActionFailureLogMessage(url, params, e, userType));
+            cleanUpStatusMessageInSession(req);
+            resp.sendRedirect(Const.ViewURIs.INVALID_ORIGIN);
+
         } catch (UnauthorizedAccessException e) {
-            log.warning(ActivityLogEntry.generateServletActionFailureLogMessage(req, e, userType));
+            log.warning(new LogMessageGenerator()
+                                .generateActionFailureLogMessage(url, params, e, userType));
             cleanUpStatusMessageInSession(req);
             resp.sendRedirect(Const.ViewURIs.UNAUTHORIZED);
 
@@ -107,12 +119,12 @@ public class ControllerServlet extends HttpServlet {
             String requestUrl = req.getRequestURL().toString();
             log.info(e.getMessage());
             cleanUpStatusMessageInSession(req);
-            
+
             List<StatusMessage> statusMessagesToUser = new ArrayList<StatusMessage>();
             statusMessagesToUser.add(new StatusMessage(Const.StatusMessages.NULL_POST_PARAMETER_MESSAGE,
                                                        StatusMessageColor.WARNING));
             req.getSession().setAttribute(Const.ParamsNames.STATUS_MESSAGES_LIST, statusMessagesToUser);
-            
+
             if (requestUrl.contains("/instructor")) {
                 resp.sendRedirect(Const.ActionURIs.INSTRUCTOR_HOME_PAGE);
             } else if (requestUrl.contains("/student")) {
@@ -124,26 +136,18 @@ public class ControllerServlet extends HttpServlet {
                 resp.sendRedirect(Const.ViewURIs.ERROR_PAGE);
             }
         } catch (Throwable t) {
-            String requestMethod = req.getMethod();
-            String requestUserAgent = req.getHeader("User-Agent");
-            String requestPath = req.getServletPath();
-            String requestUrl = req.getRequestURL().toString();
-            String requestParams = HttpRequestHelper.printRequestParameters(req);
-            
-            EmailWrapper errorReport =
-                    new EmailGenerator().generateSystemErrorEmail(requestMethod, requestUserAgent, requestPath,
-                                                                  requestUrl, requestParams, userType, t);
-            new EmailSender().sendReport(errorReport);
-            if (errorReport != null) {
-                log.severe(ActivityLogEntry.generateSystemErrorReportLogMessage(req, errorReport, userType));
-            }
-            
+            /* Log only stack trace to prevent delay in termination of request
+             * which can result in GAE shutting down the instance.
+             * Note that severe logs are sent by email automatically in the cron job auto/compileLogs.
+             */
+            log.severe("Unexpected exception caught by ControllerServlet : "
+                        + TeammatesException.toStringWithStackTrace(t));
             cleanUpStatusMessageInSession(req);
             resp.sendRedirect(Const.ViewURIs.ERROR_PAGE);
         }
-        
+
     }
-    
+
     private void cleanUpStatusMessageInSession(HttpServletRequest req) {
         req.getSession().removeAttribute(Const.ParamsNames.STATUS_MESSAGES_LIST);
     }
