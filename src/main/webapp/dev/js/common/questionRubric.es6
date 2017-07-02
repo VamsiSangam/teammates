@@ -13,7 +13,6 @@ import {
 } from './ui.es6';
 
 const EDIT_STATUS_HAS_RESPONSES = 'hasResponses';
-const EDIT_STATUS_MUST_DELETE_RESPONSES = 'mustDeleteResponses';
 
 function deleteExistingResponses(questionNum) {
     const $form = $(`#form_editquestion-${questionNum}`);
@@ -47,7 +46,7 @@ function deleteExistingResponses(questionNum) {
 function checkExistingResponsesBeforeMovingCols(questionNum) {
     const EDIT_STATUS = $(`#form_editquestion-${questionNum}`).attr('editstatus');
 
-    if (EDIT_STATUS === EDIT_STATUS_HAS_RESPONSES || EDIT_STATUS === EDIT_STATUS_MUST_DELETE_RESPONSES) {
+    if (EDIT_STATUS === EDIT_STATUS_HAS_RESPONSES) {
         const DELETE_RESP_TITLE = 'Caution!';
         const DELETE_RESP_MESSAGE_TEXT = 'This question has existing responses. Moving rubric columns requires deletion'
                 + ' of existing responses. Do you really want to delete existing responses?';
@@ -76,8 +75,7 @@ function swapRubricCol(questionNum, colIndex, isSwapLeft) {
     if ($(`#rubricEditTable-${questionNum}`).length === 0
             || $(`.rubricCol-${questionNum}-${colIndex}`).length === 0
             || typeof isSwapLeft !== 'boolean'
-            || EDIT_STATUS === EDIT_STATUS_HAS_RESPONSES
-            || EDIT_STATUS === EDIT_STATUS_MUST_DELETE_RESPONSES) {
+            || EDIT_STATUS === EDIT_STATUS_HAS_RESPONSES) {
         // question and column should exist, isSwapLeft must be boolean, question should not have existing responses
         return;
     }
