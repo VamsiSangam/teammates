@@ -14,7 +14,7 @@ import {
 
 const EDIT_STATUS_HAS_RESPONSES = 'hasResponses';
 
-function deleteExistingResponses(questionNum) {
+function deleteExistingResponses(questionNum, colIndex, isSwapLeft) {
     const $form = $(`#form_editquestion-${questionNum}`);
     const COURSE_ID = $form.children(`input[name="${ParamsNames.COURSE_ID}"]`).val();
     const FEEDBACK_SESSION_NAME = $form.children(`input[name="${ParamsNames.FEEDBACK_SESSION_NAME}"]`).val();
@@ -36,6 +36,7 @@ function deleteExistingResponses(questionNum) {
             if (data.statusCode === '200') {
                 showModalAlert('Notice', data.message, 'OK', StatusType.SUCCESS);
                 $(`#form_editquestion-${questionNum}`).removeAttr('editstatus');
+                swapRubricCol(questionNum, colIndex, isSwapLeft);
             } else {
                 showModalAlert('Notice', data.message, 'OK', StatusType.DANGER);
             }
@@ -43,7 +44,7 @@ function deleteExistingResponses(questionNum) {
     });
 }
 
-function checkExistingResponsesBeforeMovingCols(questionNum) {
+function checkExistingResponsesBeforeMovingCols(questionNum, colIndex, isSwapLeft) {
     const EDIT_STATUS = $(`#form_editquestion-${questionNum}`).attr('editstatus');
 
     if (EDIT_STATUS === EDIT_STATUS_HAS_RESPONSES) {
@@ -58,7 +59,7 @@ function checkExistingResponsesBeforeMovingCols(questionNum) {
                 DELETE_RESP_TITLE,
                 DELETE_RESP_MESSAGE_TEXT,
                 () => {
-                    deleteExistingResponses(questionNum);
+                    deleteExistingResponses(questionNum, colIndex, isSwapLeft);
                 },
                 null,
                 DELETE_RESP_BTN_TEXT,
@@ -69,7 +70,7 @@ function checkExistingResponsesBeforeMovingCols(questionNum) {
 }
 
 function swapRubricCol(questionNum, colIndex, isSwapLeft) {
-    checkExistingResponsesBeforeMovingCols(questionNum);
+    checkExistingResponsesBeforeMovingCols(questionNum, colIndex, isSwapLeft);
     const EDIT_STATUS = $(`#form_editquestion-${questionNum}`).attr('editstatus');
 
     if ($(`#rubricEditTable-${questionNum}`).length === 0
