@@ -1,8 +1,10 @@
 import {
+    showModalAlert,
     showModalConfirmation,
 } from './bootboxWrapper.es6';
 
 import {
+    ParamsNames,
     StatusType,
 } from './const.es6';
 
@@ -14,20 +16,30 @@ const EDIT_STATUS_HAS_RESPONSES = 'hasResponses';
 const EDIT_STATUS_MUST_DELETE_RESPONSES = 'mustDeleteResponses';
 
 function deleteExistingResponses(questionNum) {
-    console.log(`deleteExistingResponses(${questionNum})`);
+    const $form = $(`#form_editquestion-${questionNum}`);
+    const COURSE_ID = $form.children(`input[name="${ParamsNames.COURSE_ID}"]`).val();
+    const FEEDBACK_SESSION_NAME = $form.children(`input[name="${ParamsNames.FEEDBACK_SESSION_NAME}"]`).val();
+    const FEEDBACK_QUESTION_ID = $form.children(`input[name="${ParamsNames.FEEDBACK_QUESTION_ID}"]`).val();
+    const USER = $form.children(`input[name="${ParamsNames.USER}"]`).val();
+    const TOKEN = $form.children(`input[name="${ParamsNames.SESSION_TOKEN}"]`).val();
+
     $.ajax({
         type: 'POST',
         url: '/page/instructorFeedbackDeleteExistingResponses',
-        beforeSend() {
-            // TODO : Display loader?
-            console.log(`deleteExistingResponses(${questionNum}) beforeSend()`);
-        },
-        error() {
-            console.log(`deleteExistingResponses(${questionNum}) error()`);
+        data: {
+            courseid: COURSE_ID,
+            fsname: FEEDBACK_SESSION_NAME,
+            questionid: FEEDBACK_QUESTION_ID,
+            user: USER,
+            token: TOKEN,
         },
         success(data) {
-            console.log(`deleteExistingResponses(${questionNum}) success() - ${data}`);
-            $(`#form_editquestion-${questionNum}`).removeAttr('editstatus');
+            if (data.statusCode === '200') {
+                showModalAlert('Notice', data.message, 'OK', StatusType.SUCCESS);
+                $(`#form_editquestion-${questionNum}`).removeAttr('editstatus');
+            } else {
+                showModalAlert('Notice', data.message, 'OK', StatusType.DANGER);
+            }
         },
     });
 }

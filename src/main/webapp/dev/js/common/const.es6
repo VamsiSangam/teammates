@@ -20,6 +20,7 @@ const ParamsNames = {
     COURSE_ID: 'courseid',
     COURSE_NAME: 'coursename',
     COURSE_TIME_ZONE: 'coursetimezone',
+    SESSION_TOKEN: 'token',
     FEEDBACK_SESSION_NAME: 'fsname',
     FEEDBACK_SESSION_STARTDATE: 'startdate',
     FEEDBACK_SESSION_STARTTIME: 'starttime',
@@ -36,6 +37,7 @@ const ParamsNames = {
     FEEDBACK_QUESTION_CONSTSUMPOINTSFOREACHOPTION: 'constSumPointsForEachOption',
     FEEDBACK_QUESTION_CONSTSUMPOINTSFOREACHRECIPIENT: 'constSumPointsForEachRecipient',
     FEEDBACK_QUESTION_CONSTSUMTORECIPIENTS: 'constSumToRecipients',
+    FEEDBACK_QUESTION_ID: 'questionid',
     FEEDBACK_QUESTION_MCQCHOICE: 'mcqOption',
     FEEDBACK_QUESTION_MSQCHOICE: 'msqOption',
     FEEDBACK_QUESTION_NUMBEROFCHOICECREATED: 'noofchoicecreated',
@@ -57,6 +59,7 @@ const ParamsNames = {
     FEEDBACK_QUESTION_DESCRIPTION: 'questiondescription',
     FEEDBACK_QUESTION_DISCARDCHANGES: 'questiondiscardchanges',
     FEEDBACK_QUESTION_SAVECHANGESTEXT: 'questionsavechangestext',
+    USER: 'user',
 };
 
 const Const = {
