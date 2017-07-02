@@ -10,11 +10,65 @@ import {
     disallowNonNumericEntries,
 } from './ui.es6';
 
+let isMovingRubricColsAllowed = false;
+
+function deleteExistingResponses(questionNum) {
+    console.log(`deleteExistingResponses(${questionNum})`);
+    $.ajax({
+        type: 'POST',
+        url: '/page/instructorFeedbackDeleteExistingResponses',
+        beforeSend() {
+            // TODO : Display loader?
+            console.log(`deleteExistingResponses(${questionNum}) beforeSend()`);
+        },
+        error() {
+            isMovingRubricColsAllowed = false;
+            console.log(`deleteExistingResponses(${questionNum}) error()`);
+        },
+        success(data) {
+            console.log(`deleteExistingResponses(${questionNum}) success() - ${data}`);
+            isMovingRubricColsAllowed = true;
+            $(`#form_editquestion-${questionNum}`).removeAttr('editstatus');
+        },
+    });
+}
+
+function checkExistingResponsesBeforeMovingCols(questionNum) {
+    const $form = $(`#form_editquestion-${questionNum}`);
+
+    if ($form.attr('editstatus') === 'hasResponses') {
+        const DELETE_RESP_TITLE = 'Caution!';
+        const DELETE_RESP_MESSAGE_TEXT = 'This question has existing responses. Moving rubric columns requires deletion'
+                + ' of existing responses. Do you really want to delete existing responses?';
+        const DELETE_RESP_BTN_TEXT = 'Delete Responses';
+        const DELETE_RESP_CANCEL_BTN_TEXT = 'Cancel';
+        const DELETE_RESP_COLOR = StatusType.DANGER;
+
+        showModalConfirmation(
+                DELETE_RESP_TITLE,
+                DELETE_RESP_MESSAGE_TEXT,
+                () => {
+                    deleteExistingResponses(questionNum);
+                },
+                () => {
+                    isMovingRubricColsAllowed = false;
+                },
+                DELETE_RESP_BTN_TEXT,
+                DELETE_RESP_CANCEL_BTN_TEXT,
+                DELETE_RESP_COLOR);
+    } else {
+        isMovingRubricColsAllowed = true;
+    }
+}
+
 function swapRubricCol(questionNum, colIndex, isSwapLeft) {
+    checkExistingResponsesBeforeMovingCols(questionNum);
+
     if ($(`#rubricEditTable-${questionNum}`).length === 0
             || $(`.rubricCol-${questionNum}-${colIndex}`).length === 0
-            || typeof isSwapLeft !== 'boolean') {
-        // question and column should exist, isSwapLeft must be boolean
+            || typeof isSwapLeft !== 'boolean'
+            || !isMovingRubricColsAllowed) {
+        // question and column should exist, isSwapLeft must be boolean, moving columns is allowed
         return;
     }
 
