@@ -10,7 +10,8 @@ import {
     disallowNonNumericEntries,
 } from './ui.es6';
 
-let isMovingRubricColsAllowed = false;
+const EDIT_STATUS_HAS_RESPONSES = 'hasResponses';
+const EDIT_STATUS_MUST_DELETE_RESPONSES = 'mustDeleteResponses';
 
 function deleteExistingResponses(questionNum) {
     console.log(`deleteExistingResponses(${questionNum})`);
@@ -22,21 +23,19 @@ function deleteExistingResponses(questionNum) {
             console.log(`deleteExistingResponses(${questionNum}) beforeSend()`);
         },
         error() {
-            isMovingRubricColsAllowed = false;
             console.log(`deleteExistingResponses(${questionNum}) error()`);
         },
         success(data) {
             console.log(`deleteExistingResponses(${questionNum}) success() - ${data}`);
-            isMovingRubricColsAllowed = true;
             $(`#form_editquestion-${questionNum}`).removeAttr('editstatus');
         },
     });
 }
 
 function checkExistingResponsesBeforeMovingCols(questionNum) {
-    const $form = $(`#form_editquestion-${questionNum}`);
+    const EDIT_STATUS = $(`#form_editquestion-${questionNum}`).attr('editstatus');
 
-    if ($form.attr('editstatus') === 'hasResponses') {
+    if (EDIT_STATUS === EDIT_STATUS_HAS_RESPONSES || EDIT_STATUS === EDIT_STATUS_MUST_DELETE_RESPONSES) {
         const DELETE_RESP_TITLE = 'Caution!';
         const DELETE_RESP_MESSAGE_TEXT = 'This question has existing responses. Moving rubric columns requires deletion'
                 + ' of existing responses. Do you really want to delete existing responses?';
@@ -50,25 +49,24 @@ function checkExistingResponsesBeforeMovingCols(questionNum) {
                 () => {
                     deleteExistingResponses(questionNum);
                 },
-                () => {
-                    isMovingRubricColsAllowed = false;
-                },
+                null,
                 DELETE_RESP_BTN_TEXT,
                 DELETE_RESP_CANCEL_BTN_TEXT,
-                DELETE_RESP_COLOR);
-    } else {
-        isMovingRubricColsAllowed = true;
+                DELETE_RESP_COLOR,
+        );
     }
 }
 
 function swapRubricCol(questionNum, colIndex, isSwapLeft) {
     checkExistingResponsesBeforeMovingCols(questionNum);
+    const EDIT_STATUS = $(`#form_editquestion-${questionNum}`).attr('editstatus');
 
     if ($(`#rubricEditTable-${questionNum}`).length === 0
             || $(`.rubricCol-${questionNum}-${colIndex}`).length === 0
             || typeof isSwapLeft !== 'boolean'
-            || !isMovingRubricColsAllowed) {
-        // question and column should exist, isSwapLeft must be boolean, moving columns is allowed
+            || EDIT_STATUS === EDIT_STATUS_HAS_RESPONSES
+            || EDIT_STATUS === EDIT_STATUS_MUST_DELETE_RESPONSES) {
+        // question and column should exist, isSwapLeft must be boolean, question should not have existing responses
         return;
     }
 
