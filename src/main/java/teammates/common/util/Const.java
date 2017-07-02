@@ -924,6 +924,8 @@ public final class Const {
         public static final String INSTRUCTOR_FEEDBACK_ADD = "/page/instructorFeedbackAdd";
         public static final String INSTRUCTOR_FEEDBACK_COPY = "/page/instructorFeedbackCopy";
         public static final String INSTRUCTOR_FEEDBACK_DELETE = "/page/instructorFeedbackDelete";
+        public static final String INSTRUCTOR_FEEDBACK_DELETE_EXISTING_RESPONSES =
+                "/page/instructorFeedbackDeleteExistingResponses";
         public static final String INSTRUCTOR_FEEDBACK_REMIND = "/page/instructorFeedbackRemind";
         public static final String INSTRUCTOR_FEEDBACK_REMIND_PARTICULAR_STUDENTS_PAGE =
                 "/page/instructorFeedbackRemindParticularStudentsPage";

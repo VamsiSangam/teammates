@@ -77,6 +77,7 @@ public class ActionFactory {
         map(INSTRUCTOR_FEEDBACK_ADD, InstructorFeedbackAddAction.class);
         map(INSTRUCTOR_FEEDBACK_COPY, InstructorFeedbackCopyAction.class);
         map(INSTRUCTOR_FEEDBACK_DELETE, InstructorFeedbackDeleteAction.class);
+        map(INSTRUCTOR_FEEDBACK_DELETE_EXISTING_RESPONSES, InstructorFeedbackDeleteExistingResponsesAction.class);
         map(INSTRUCTOR_FEEDBACK_EDIT_COPY_PAGE, InstructorFeedbackEditCopyPageAction.class);
         map(INSTRUCTOR_FEEDBACK_EDIT_COPY, InstructorFeedbackEditCopyAction.class);
         map(INSTRUCTOR_FEEDBACK_EDIT_PAGE, InstructorFeedbackEditPageAction.class);
